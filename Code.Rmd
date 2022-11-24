@@ -89,6 +89,39 @@ m26 = ScaleData(m26, vars.to.regress = c("nFeature_RNA", "percent.mt"))
 m26 = RunPCA(m26, npcs = 20)
 m26 = RunUMAP(m26, dims = 1:10)
 
+#mt filtered 
+
+selected_mito <- WhichCells(m26, expression = percent.mt < 5)
+selected_c <- WhichCells(m26, expression = nFeature_RNA > 200)
+selected_f <- rownames(m26)[Matrix::rowSums(m26) > 3]
+m26.filt <- subset(m26, features = selected_f, cells = selected_c)
+m26.filt <- subset(m26, cells = selected_mito)
+VlnPlot(m26.filt, group.by = "orig.ident", features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+
+#Doublet finder
+
+suppressMessages(require(DoubletFinder))
+
+m26.filt = FindVariableFeatures(m26.filt, verbose = F)
+m26.filt = ScaleData(m26.filt, vars.to.regress = c("nFeature_RNA", "percent.mt"),
+    verbose = F)
+data.filt = RunPCA(m26.filt, verbose = F, npcs = 20)
+data.filt = RunUMAP(m26.filt, dims = 1:10, verbose = F)
+
+nExp <- round(ncol(m26.filt) * 0.04)  # expect 4% doublets
+m26.filt <- doubletFinder_v3(m26.filt, pN = 0.25, pK = 0.09, nExp = nExp, PCs = 1:10)
+
+DF.name = colnames(m26.filt@meta.data)[grepl("DF.classification", colnames(m26.filt@meta.data))]
+
+
+
+cowplot::plot_grid(ncol = 2, DimPlot(m26.filt, group.by = "orig.ident") + NoAxes(),
+    DimPlot(m26.filt, group.by = DF.name) + NoAxes())
+
+m26.filt = m26.filt[, m26.filt@meta.data[, DF.name] == "Singlet"]
+dim(m26.filt)
+
 ```
 
 ```{r}
@@ -98,7 +131,7 @@ m26.list <- SplitObject(m26, split.by="study")
 
 m26.list <- lapply(X = m26.list, FUN = function(x) {
   x <- NormalizeData(x)
-  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 5000)
+  x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)
 })
 features <- SelectIntegrationFeatures(object.list = m26.list)
 immune.anchors <- FindIntegrationAnchors(object.list = m26.list,
@@ -243,7 +276,14 @@ head(x = Idents(object = m26_myc_triple))
 m26_myc_triple <- NormalizeData(m26_myc_triple, normalization.method = "LogNormalize", scale.factor = 10000)
 m26_myc_triple <- ScaleData(m26_myc_triple)
 
-DEG.markers_triple <- FindMarkers(m26_myc_triple, ident.1 = "M+2+6-", ident.2 = "triple positive")
+DEG.markers_triple <- FindMarkers(m26_myc_triple, ident.1 = "M+2+6-", ident.2 = "triple positive", slot = "counts")
+
+library(EnhancedVolcano)
+
+EnhancedVolcano(DEG.markers_triple , 
+                rownames(DEG.markers_triple ),
+                x ="avg_log2FC", 
+                y ="p_val_adj", FCcutoff = 0.25)
 
 
 
@@ -321,9 +361,9 @@ DEG.markers_triple <- FindMarkers(m26_abc_all, ident.1 = "M+2+6-", ident.2 = "ot
 ## Mp2p6n vs all 
 
 
-markers <- FindMarkers(m26_myc, ident.1 = "M+2+6-", ident.2 = "all", logfc.threshold = 0, min.pct = 0, test.use="MAST")
+markers <- FindMarkers(m26_myc_triple, ident.1 = "M+2+6-", ident.2 = "triple positive", test.use="MAST", logfc.threshold = 0, slot = "counts")
 
-ranks <- markers$avg_logFC
+ranks <- markers$avg_log2FC
 names(ranks) <- rownames(markers)
 
 m_df<- msigdbr(species = "Homo sapiens", category = "H")
@@ -333,9 +373,27 @@ fgsea_sets<- m_df %>% split(x = .$gene_symbol, f = .$gs_name)
 fgseaRes <- fgsea(pathways = fgsea_sets, 
                   stats = ranks,
                   minSize=10,
-                  maxSize=500,
-                  nperm=1000000)
+                  maxSize=500)
 
+S3<- ggplot(fgseaRes, aes(x= NES, y=reorder(pathway,NES), size=size, color=pval, group=NES)) + geom_point(alpha = 0.8) + labs(x="Normalized Enrichment Score", y="Pathways",title="Hallmark pathways NES from GSEA") + theme_minimal()
+S3
+
+
+```
+
+
+```{r}
+#SCTransform
+m26.list <- SplitObject(m26, split.by = "study")
+m26.list <- lapply(X = m26.list, FUN = SCTransform)
+features <- SelectIntegrationFeatures(object.list = m26.list, nfeatures = 2000)
+m26.list <- PrepSCTIntegration(object.list = m26.list, anchor.features = features)
+immune.anchors <- FindIntegrationAnchors(object.list = m26.list, normalization.method = "SCT",
+    anchor.features = features)
+immune.combined.sct <- IntegrateData(anchorset = immune.anchors, normalization.method = "SCT")
+immune.combined.sct <- RunPCA(immune.combined.sct, verbose = FALSE)
+immune.combined.sct <- RunUMAP(immune.combined.sct, reduction = "pca", dims = 1:30)
+DimPlot(immune.combined.sct, reduction = "umap", group.by = "study")
 
 ```
 
