@@ -11,6 +11,6 @@
 
 1. Integrating single cell datasets
 2. Differential gene expression and pathway analysis of integrated dataset 
-3. Patway analysis of GEP cohort 
+3. Pathway analysis of GEP cohort 
 
 
