@@ -13,4 +13,5 @@
 2. Differential gene expression and pathway analysis of integrated dataset 
 3. Pathway analysis of GEP cohort 
 
-
+### Authors
+Shruti Sridhar [shruti.sridhar@u.nus.edu]
