@@ -14,4 +14,4 @@
 3. Pathway analysis of GEP cohort 
 
 ### Authors
-Shruti Sridhar [shruti.sridhar@u.nus.edu]
+Shruti Sridhar [shruti.sridhar@u.nus.edu](mailto::shruti.sridhar@u.nus.edu)
