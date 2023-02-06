@@ -143,8 +143,6 @@ immune.combined.sct <- RunPCA(immune.combined.sct, verbose = FALSE)
 immune.combined.sct <- RunUMAP(immune.combined.sct, reduction = "pca", dims = 1:30)
 DimPlot(immune.combined.sct, reduction = "umap", group.by = "study")
 
-immune.combined.sct <- FindNeighbors(immune.combined.sct_filt, dims = 1:10)
-immune.combined.sct <- FindClusters(immune.combined.sct_filt, resolution = 0.5)
 
 ```
 
