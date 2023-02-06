@@ -2,10 +2,10 @@
 
 ## Sc-RNA Seq analysis 
 
-### Data used: 
+### Data used
 
-1. DLBCL1 and DLBCL3 samples from Roider et al ([https://heidata.uni-heidelberg.de/dataset.xhtml?persistentId=doi:10.11588/data/VRJUNV])
-2. Cell annotation and count matrix files from Steen et al ([https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE182434])
+1. DLBCL1 and DLBCL3 samples from [Roider et al] (https://heidata.uni-heidelberg.de/dataset.xhtml?persistentId=doi:10.11588/data/VRJUNV)
+2. Cell annotation and count matrix files from [Steen et al] (https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE182434)
 
 ### Analysis conducted
 
